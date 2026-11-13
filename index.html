@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>E0 · Mecânica (rascunho)</title>
+<style>
+:root{--bg:#14110d;--panel:#1f1a14;--ink:#efe6d6;--muted:#a89a84;--accent:#d9a441;--ok:#7fb069;--bad:#d1603d;--card:#2b241b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Georgia,serif;overflow:hidden}
+#c{position:fixed;inset:0}
+#hud{position:fixed;top:8px;left:8px;right:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;z-index:5}
+.pill{background:rgba(31,26,20,.92);border:1px solid #4a3f30;border-radius:999px;padding:4px 10px;font:13px system-ui}
+#chama{display:flex;gap:2px;align-items:center}
+.flame{width:8px;height:14px;border-radius:3px;background:#3a3127}
+.flame.on{background:var(--accent)}
+#task{position:fixed;top:46px;left:8px;width:min(340px,46vw);background:rgba(31,26,20,.94);border-left:3px solid var(--accent);padding:8px 10px;font-size:14px;line-height:1.35;border-radius:6px;z-index:5}
+#task .btn{margin-top:6px}
+#rolo{position:fixed;top:46px;right:8px;width:min(380px,48vw);max-height:44vh;overflow:auto;background:#efe3c8;color:#2a2116;border-radius:8px;padding:10px 12px;font-size:15px;line-height:1.5;box-shadow:0 4px 18px #0008;z-index:5}
+#rolo:empty{display:none}
+#rolo .ref{display:block;font:12px system-ui;color:#7a6a50;margin-bottom:4px}
+#rolo .w{cursor:pointer;border-bottom:2px dotted #9a8560;padding:0 1px}
+#rolo .w:hover{background:#e2cf9f}
+#rolo .hit{background:#cfe6b8}
+#story{position:fixed;left:8px;right:8px;bottom:146px;margin:auto;max-width:720px;background:rgba(20,17,13,.96);border:1px solid #4a3f30;border-radius:10px;padding:12px 14px;z-index:8;display:none}
+#story .who{font:12px system-ui;color:var(--muted);margin-bottom:4px}
+#story .txt{font-size:17px;line-height:1.45}
+.btn{display:inline-block;background:var(--accent);color:#1b140b;border:0;border-radius:6px;padding:7px 12px;font:600 14px system-ui;cursor:pointer;margin-top:8px}
+.btn.alt{background:#4a3f30;color:var(--ink)}
+#tray{position:fixed;left:8px;right:8px;bottom:8px;display:flex;gap:8px;overflow-x:auto;padding:6px;background:rgba(20,17,13,.9);border-radius:10px;height:128px;z-index:5}
+.zt{flex:0 0 auto;font:600 11px system-ui;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);text-align:center}
+.card{flex:0 0 auto;width:124px;height:112px;background:var(--card);border:2px solid #5b4c38;border-radius:8px;padding:6px 7px;font-size:12px;cursor:pointer;overflow:hidden}
+.card .t{font:700 10px system-ui;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.card .n{font-size:14px;margin-top:3px;line-height:1.2}
+.card .b{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.25}
+.card.piece{background:#3a3326;border-style:dashed}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.card.veiled .n,.card.veiled .b{filter:blur(4px)}
+.card.equiv{background:#3a3a3a;border-color:#777}
+.card.gold{border-color:#e8c25a;box-shadow:inset 0 0 12px #e8c25a55}
+.card.tool{border-color:#b3412f}
+#slots{position:fixed;left:50%;top:47%;transform:translate(-50%,-50%);display:none;gap:10px;flex-wrap:wrap;justify-content:center;max-width:720px;z-index:6}
+.slot{width:160px;min-height:78px;border:2px dashed #8a7656;border-radius:8px;padding:8px;font-size:13px;background:rgba(20,17,13,.92);cursor:pointer;text-align:center;line-height:1.3}
+.slot small{display:block;color:var(--muted);font:11px system-ui;margin-bottom:4px}
+.slot.filled{border-style:solid;border-color:var(--ok)}
+#toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#2a2219;border:1px solid var(--accent);border-radius:8px;padding:10px 14px;font-size:15px;display:none;max-width:min(520px,90vw);z-index:20;line-height:1.4}
+#toast.bad{border-color:var(--bad)}
+#toast.ok{border-color:var(--ok)}
+#legend{position:fixed;right:8px;bottom:140px;font:11px system-ui;color:var(--muted);z-index:4;text-align:right}
+@media (max-width:700px){
+ #task{width:calc(100vw - 16px)}
+ #rolo{width:calc(100vw - 16px);top:auto;bottom:142px;max-height:30vh}
+ #legend{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <span class="pill" id="etapa">E0</span>
+  <span class="pill" id="chama" title="Chama: sobe com leitura atenta, desce com chutes"></span>
+  <span class="pill" id="diarioBtn" style="cursor:pointer">Diário (0)</span>
+</div>
+<div id="task"></div>
+<div id="rolo"></div>
+<div id="slots"></div>
+<div id="story"><div class="who"></div><div class="txt"></div><button class="btn" id="next">Continuar</button></div>
+<div id="toast"></div>
+<div id="tray"></div>
+<div id="legend">Rascunho de mecânica, não protótipo.<br>Citações: ARA de memória, conferir.</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ---------------- estado ----------------
+const S={chama:5,sel:null,step:null,diario:[],cards:[],pieces:[],placed:{},stamped:new Set(),pairs:[],pairA:null,visited:new Set(),frag:{},seats:{},stmt:0,desfile:0,timeline:[],sint:{},equivGiven:false};
+const $=id=>document.getElementById(id);
+
+// ---------------- UI ----------------
+function setTask(html){$('task').innerHTML=html}
+function setRolo(ref,html){$('rolo').innerHTML=ref?`<span class="ref">${ref} · ARA ⚠</span>${html}`:''}
+function setEtapa(t){$('etapa').textContent=t}
+let toastT=null;
+function toast(msg,kind=''){const t=$('toast');t.className=kind;t.innerHTML=msg;t.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>t.style.display='none',2600)}
+function renderChama(){const el=$('chama');el.innerHTML='<span style="margin-right:6px">Chama</span>';for(let i=0;i<10;i++){const f=document.createElement('span');f.className='flame'+(i<Math.round(S.chama)?' on':'');el.appendChild(f)}}
+function level(){return S.chama>=7?'alta':S.chama>=4?'média':S.chama>=2?'baixa':'muito baixa'}
+function good(){S.chama=Math.min(10,S.chama+0.5);renderChama()}
+function bad(msg){S.chama=Math.max(0,S.chama-1);renderChama();const h=HINTS[S.step];let extra='';if(h){if(level()!=='alta')extra='<br><i>Ajuda ('+level()+'):</i> '+h[0];if(level()==='baixa'||level()==='muito baixa')extra+='<br>'+h[1]}toast((msg||'Ainda não.')+extra,'bad')}
+function addDiario(t){S.diario.push(t);$('diarioBtn').textContent='Diário ('+S.diario.length+')'}
+$('diarioBtn').onclick=()=>toast(S.diario.length?'<b>Diário</b><br>'+S.diario.map(d=>'• '+d).join('<br>'):'Diário vazio.');
+
+// story queue
+let storyQ=[],storyDone=null;
+function say(lines,done){storyQ=lines.slice();storyDone=done;$('story').style.display='block';nextLine()}
+function nextLine(){if(!storyQ.length){$('story').style.display='none';const d=storyDone;storyDone=null;d&&d();return}const [who,txt]=storyQ.shift();const tag={E:'💬 Estranho',C:'🎭 Cleopas',T:'📜 Texto (ARA ⚠)',N:'Cena'}[who]||who;$('story').querySelector('.who').textContent=tag;$('story').querySelector('.txt').innerHTML=txt}
+$('next').onclick=nextLine;
+
+// cards & pieces
+function addCard(c){S.cards.push(c);renderTray()}
+function getCard(id){return S.cards.find(c=>c.id===id)}
+function removeCard(id){S.cards=S.cards.filter(c=>c.id!==id);if(S.sel&&S.sel.id===id)S.sel=null;renderTray()}
+function setPieces(p){S.pieces=p;S.sel=null;renderTray()}
+function removePiece(id){S.pieces=S.pieces.filter(p=>p.id!==id);if(S.sel&&S.sel.id===id)S.sel=null;renderTray()}
+function renderTray(){const tr=$('tray');tr.innerHTML='';
+ const zc=document.createElement('div');zc.className='zt';zc.textContent='CARTAS';tr.appendChild(zc);
+ S.cards.forEach(c=>tr.appendChild(cardEl(c,'card')));
+ if(S.pieces.length){const zp=document.createElement('div');zp.className='zt';zp.textContent='PEÇAS';tr.appendChild(zp);S.pieces.forEach(p=>tr.appendChild(cardEl(p,'piece')))}}
+function cardEl(c,kind){const d=document.createElement('div');d.className='card'+(kind==='piece'?' piece':'')+(c.cls?' '+c.cls:'')+(S.sel&&S.sel.id===c.id?' sel':'');
+ d.innerHTML=`<div class="t">${c.type}</div><div class="n">${c.name}</div>${c.back?`<div class="b">${c.back}</div>`:''}`;
+ d.onclick=()=>{S.sel=(S.sel&&S.sel.id===c.id)?null:{id:c.id,kind};renderTray();onSelect&&onSelect(c)};return d}
+let onSelect=null;
+
+// slots
+function showSlots(list,handler){const el=$('slots');el.innerHTML='';el.style.display='flex';list.forEach(s=>{const d=document.createElement('div');d.className='slot'+(s.filled?' filled':'');d.innerHTML=(s.label?`<small>${s.label}</small>`:'')+(s.content||'');d.onclick=()=>handler(s.id,d);el.appendChild(d)})}
+function hideSlots(){$('slots').style.display='none';$('slots').innerHTML=''}
+
+// ---------------- três.js ----------------
+const renderer=new THREE.WebGLRenderer({canvas:$('c'),antialias:true});
+renderer.setPixelRatio(Math.min(2,devicePixelRatio));
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x14110d);
+const camera=new THREE.PerspectiveCamera(45,1,0.1,200);camera.position.set(0,11,13);camera.lookAt(0,0,0);
+const hemi=new THREE.HemisphereLight(0xfff1d6,0x221a12,0.5);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffffff,0.8);sun.position.set(5,10,6);scene.add(sun);
+function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.position.z=innerWidth<700?17:13;camera.position.y=innerWidth<700?13:11;camera.lookAt(0,0,0);camera.updateProjectionMatrix()}
+addEventListener('resize',resize);resize();
+const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.8},o));
+function label(text,scale=1,col='#efe6d6'){const c=document.createElement('canvas');c.width=512;c.height=96;const x=c.getContext('2d');x.font='bold 46px Georgia';x.fillStyle=col;x.textAlign='center';x.fillText(text,256,62);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.scale.set(3.2*scale,.6*scale,1);return s}
+
+// --- semana ---
+const gWeek=new THREE.Group();scene.add(gWeek);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(40,40),M(0x1c1812));floor.rotation.x=-Math.PI/2;floor.position.y=-.31;scene.add(floor);
+const days={};
+for(let i=1;i<=6;i++){const g=new THREE.Group();const row=i<=3?0:1;const col=(i-1)%3;g.position.set((col-1)*3.4,0,row?2.3:-2.3);
+ const box=new THREE.Mesh(new THREE.BoxGeometry(2.4,.5,2.2),M(row?0x4a3d2c:0x3b3328));g.add(box);
+ const l=label('Dia '+i,.8);l.position.set(0,1.9,0);g.add(l);
+ g.userData={kind:'day',day:i,box,base:g.position.clone()};gWeek.add(g);days[i]=g}
+const day7=new THREE.Group();{const b=new THREE.Mesh(new THREE.BoxGeometry(2.4,.5,2.2),M(0x2c2a3a));day7.add(b);const l=label('Dia 7',.8);l.position.set(0,1.9,0);day7.add(l);day7.position.set(7.5,0,0);day7.userData={kind:'day7'};day7.visible=false;gWeek.add(day7)}
+const tudo=new THREE.Group();{const b=new THREE.Mesh(new THREE.CylinderGeometry(3.2,3.4,.6,40),M(0x6b5a3a));tudo.add(b);const l=label('Tudo quanto fizera',1);l.position.set(0,2.2,0);tudo.add(l);tudo.userData={kind:'tudo',box:b};tudo.visible=false;gWeek.add(tudo)}
+const OBRAS=[
+ {id:'o1',day:1,name:'Luz',color:0xfff3b0},
+ {id:'o2',day:2,name:'Céu e águas',color:0x5a8fd6},
+ {id:'o3',day:3,name:'Terra seca e plantas',color:0x5f9e4b},
+ {id:'o4',day:4,name:'Luzeiros e estrelas',color:0xf2c14e},
+ {id:'o5',day:5,name:'Peixes e aves',color:0x6fd3d0},
+ {id:'o6',day:6,name:'Animais e humanos',color:0xb07a4f}];
+function obraMesh(o){const g=new THREE.Group();
+ if(o.day===1){g.add(new THREE.Mesh(new THREE.SphereGeometry(.45,24,16),M(o.color,{emissive:0xffe08a,emissiveIntensity:.8})))}
+ if(o.day===2){const w=new THREE.Mesh(new THREE.BoxGeometry(1.8,.12,1.6),M(o.color));w.position.y=.1;g.add(w);const s=new THREE.Mesh(new THREE.BoxGeometry(1.8,.08,1.6),M(0x9cc3f2,{transparent:true,opacity:.6}));s.position.y=.9;g.add(s)}
+ if(o.day===3){for(let k=0;k<3;k++){const t=new THREE.Mesh(new THREE.ConeGeometry(.25,.8,10),M(o.color));t.position.set(-.6+k*.6,.4,0);g.add(t)}}
+ if(o.day===4){const a=new THREE.Mesh(new THREE.SphereGeometry(.4,20,14),M(o.color,{emissive:0xf2a93b,emissiveIntensity:.7}));a.position.x=-.4;g.add(a);const b=new THREE.Mesh(new THREE.SphereGeometry(.22,16,12),M(0xdddddd,{emissive:0x999999,emissiveIntensity:.4}));b.position.set(.5,.2,0);g.add(b)}
+ if(o.day===5){for(let k=0;k<3;k++){const f=new THREE.Mesh(new THREE.ConeGeometry(.15,.5,8),M(o.color));f.rotation.z=Math.PI/2;f.position.set(-.6+k*.6,.15+(k%2)*.6,0);g.add(f)}}
+ if(o.day===6){for(let k=0;k<3;k++){const b=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,.6,10),M(o.color));b.position.set(-.6+k*.6,.3,0);g.add(b);const h=new THREE.Mesh(new THREE.SphereGeometry(.14,10,8),M(o.color));h.position.set(-.6+k*.6,.72,0);g.add(h)}}
+ g.position.y=.3;return g}
+function stampMesh(gold){const s=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.1,28),M(gold?0xe8c25a:0xb3412f,{emissive:gold?0x8a6a10:0x400a05,emissiveIntensity:.5}));s.position.set(.85,.32,.75);return s}
+const pairLines=[];
+function drawPair(a,b){const p1=days[a].position.clone();p1.y=.4;const p2=days[b].position.clone();p2.y=.4;const geo=new THREE.BufferGeometry().setFromPoints([p1,p2]);const l=new THREE.Line(geo,new THREE.LineBasicMaterial({color:0xd9a441}));gWeek.add(l);pairLines.push(l)}
+
+// --- jardim ---
+const gGarden=new THREE.Group();gGarden.visible=false;scene.add(gGarden);
+const grass=new THREE.Mesh(new THREE.CylinderGeometry(8,8.4,.4,48),M(0x2f4a24));grass.position.y=-.2;gGarden.add(grass);
+function tree(col,h=1.6,r=.6){const g=new THREE.Group();const tr=new THREE.Mesh(new THREE.CylinderGeometry(.12,.16,h,8),M(0x5a3d22));tr.position.y=h/2;g.add(tr);const c=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),M(col));c.position.y=h+r*.6;g.add(c);g.userData.crown=c;return g}
+const pomar=new THREE.Group();pomar.userData={kind:'pomar'};
+[[-5.5,-1.5],[-4.5,1.2],[-6.2,.6],[-4.2,-2.6],[-5.3,2.8],[-3.4,-.2],[4.6,-3.2],[5.6,-1.6],[3.8,-4.4]].forEach(([x,z])=>{const t=tree(0x4f8a3a,1.2,.5);t.position.set(x,0,z);pomar.add(t)});
+gGarden.add(pomar);
+const arvVida=tree(0xc9b04a,2.2,.85);arvVida.position.set(-.9,0,-.4);arvVida.userData.kind='arvVida';gGarden.add(arvVida);
+const arvConh=tree(0x9c3b3b,2.2,.85);arvConh.position.set(.9,0,-.4);arvConh.userData.kind='arvConh';gGarden.add(arvConh);
+{const l1=label('árvore da vida',.6);l1.position.set(-.9,3.9,-.4);gGarden.add(l1);const l2=label('árvore do conhecimento',.6);l2.position.set(1.1,4.4,-.4);gGarden.add(l2)}
+function person(col){const g=new THREE.Group();const b=new THREE.Mesh(new THREE.CylinderGeometry(.28,.32,1.1,12),M(col));b.position.y=.55;g.add(b);const h=new THREE.Mesh(new THREE.SphereGeometry(.26,14,10),M(col));h.position.y=1.35;g.add(h);g.userData.body=b;return g}
+const homem=person(0xc89b6d);homem.position.set(2.8,0,2);homem.userData.kind='homem';gGarden.add(homem);
+const mulher=person(0xd6a77a);mulher.position.set(3.6,0,2.3);mulher.visible=false;gGarden.add(mulher);
+const aura=new THREE.Mesh(new THREE.TorusGeometry(.6,.05,8,30),M(0xb3412f,{emissive:0x7a1a10,emissiveIntensity:.8}));aura.rotation.x=Math.PI/2;aura.position.set(2.8,.05,2);aura.visible=false;gGarden.add(aura);
+
+// picking
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+renderer.domElement.addEventListener('pointerdown',e=>{mouse.x=e.clientX/innerWidth*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;ray.setFromCamera(mouse,camera);
+ const hits=ray.intersectObjects(scene.children,true);for(const h of hits){let o=h.object;while(o&&!(o.userData&&o.userData.kind))o=o.parent;if(o&&o.visible&&isVisible(o)){onPick(o.userData.kind,o.userData);return}}});
+function isVisible(o){while(o){if(!o.visible)return false;o=o.parent}return true}
+
+// animation
+const tweens=[];
+function tween(obj,to,dur=800){tweens.push({obj,from:obj.position.clone(),to,t0:performance.now(),dur})}
+function loop(t){requestAnimationFrame(loop);for(let i=tweens.length-1;i>=0;i--){const w=tweens[i];const k=Math.min(1,(t-w.t0)/w.dur);w.obj.position.lerpVectors(w.from,w.to,k*k*(3-2*k));if(k>=1)tweens.splice(i,1)}
+ if(S.step==='intro'){hemi.intensity=.15+.1*Math.sin(t/900)}renderer.render(scene,camera)}
+requestAnimationFrame(loop);
+
+// ---------------- textos ----------------
+const DAYTXT={
+1:['Gn 1:3-5','“Disse Deus: Haja luz; e houve luz. <b>E viu Deus que a luz era boa</b>; e fez separação entre a luz e as trevas. Chamou Deus à luz Dia e às trevas, Noite. Houve tarde e manhã, o primeiro dia.”'],
+2:['Gn 1:6-8','“E disse Deus: Haja firmamento no meio das águas e separação entre águas e águas. Fez, pois, Deus o firmamento e separação entre as águas debaixo do firmamento e as águas sobre o firmamento. E assim se fez. E chamou Deus ao firmamento Céus. Houve tarde e manhã, o segundo dia.”'],
+3:['Gn 1:9-13','“...ajuntem-se as águas debaixo dos céus num só lugar, e apareça a porção seca. E assim se fez... <b>E viu Deus que isso era bom.</b> ...A terra, pois, produziu relva, ervas que davam semente segundo a sua espécie e árvores que davam fruto, cuja semente estava nele... <b>E viu Deus que isso era bom.</b>”'],
+4:['Gn 1:14-19','“...Fez Deus os dois grandes luzeiros: o maior para governar o dia, e o menor para governar a noite; e fez também as estrelas... <b>E viu Deus que isso era bom.</b>”'],
+5:['Gn 1:20-23','“...Criou, pois, Deus os grandes animais marinhos e todos os seres viventes... e todas as aves... <b>E viu Deus que isso era bom.</b> E Deus os abençoou...”'],
+6:['Gn 1:24-31','“E fez Deus os animais selváticos... <b>E viu Deus que isso era bom.</b> ...Criou Deus, pois, o homem à sua imagem, à imagem de Deus o criou; homem e mulher os criou.”']};
+// Nota de design: no jogo real o jogador acha a frase sozinho; aqui o negrito só acelera a visualização.
+const EVID_HTML='“E o SENHOR Deus <span class="w" data-w="lhe">lhe</span> deu esta ordem: De <span class="w" data-w="toda">toda</span> árvore do jardim comerás <span class="w" data-w="livremente">livremente</span>, mas da árvore do conhecimento do bem e do mal <span class="w" data-w="nao">não</span> <span class="w" data-w="comeras">comerás</span>; porque, no dia em que dela comeres, certamente <span class="w" data-w="morreras">morrerás</span>.”';
+$('rolo').addEventListener('click',e=>{const w=e.target.closest('.w');if(w)onWord(w.dataset.w,w)});
+
+const HINTS={
+ obras:['Leia o texto do dia (toque no pedestal sem peça selecionada).','O nome da peça aparece no texto daquele dia.'],
+ pares:['Dias 1 a 3 formam; dias 4 a 6 preenchem o que foi formado.','Luz ↔ luzeiros. Céu e águas ↔ peixes e aves. Terra ↔ animais e humanos.'],
+ selo:['O selo vai onde está escrito “viu Deus que... era bom”.','Leia o dia de novo: a frase está lá?'],
+ ordem:['Leia o fragmento: a quem ou a quê ele se refere?','“Toda árvore” = o pomar; “não comerás” = uma árvore só; “morrerás” = quem comer.'],
+ quem:['Quem fala é o sujeito de “deu esta ordem”.','“Lhe” aponta para quem Deus tomou em 2:15: o homem.'],
+ cleopas:['Selecione a carta “O que Deus disse” e toque a palavra que corrige Cleopas.','Procure a palavra exata no rolo.'],
+ proibido:['Procure a palavra no que Deus disse.','Só uma das opções está no texto.'],
+ quando:['Olhe os números dos versos: 2:16-17 e 2:22.','16 vem antes de 22.'],
+ sintese:['Cada espaço pede a carta que fala daquilo.','Bom → “o bom”; O que Deus disse → “o limite”...']};
+
+// ---------------- fluxo ----------------
+function go(step){S.step=step;onSelect=null;hideSlots();STEPS[step]()}
+const STEPS={
+intro(){setEtapa('E0 · Abertura');setTask('');setRolo('');gWeek.visible=true;
+ say([['N','[Fim de tarde. Estrada para Emaús.]'],['C','“Você disse que Moisés falou dele. Por onde se começa?”'],['E','Pelo princípio. Uma promessa só faz sentido para quem sabe o que se perdeu.'],['E','Escute como Moisés começa.'],['T','“No princípio, criou Deus os céus e a terra.” (Gn 1:1)'],['T','“A terra, porém, estava sem forma e vazia; havia trevas sobre a face do abismo, e o Espírito de Deus pairava por sobre as águas.” (1:2)'],['E','Então Deus falou. Dia após dia, Ele disse, e as coisas vieram a existir.'],['E','Agora é com você: ponha cada obra no dia em que ela aparece.']],()=>go('obras'))},
+
+obras(){setEtapa('E0 · Etapa 1 · A semana');hemi.intensity=.5;
+ setTask('<b>1A · As obras</b> (Encaixar)<br>Toque num pedestal para ler o dia. Depois selecione uma <b>peça de obra</b> e toque o dia certo.');
+ setPieces(OBRAS.map(o=>({id:o.id,type:'Peça · obra',name:o.name,day:o.day,color:o.color})));setRolo('','')},
+
+pares(){setTask('<b>1A · Formar e preencher</b> (Literato)<br>Os dias 1 a 3 <b>formam</b> espaços; os dias 4 a 6 os <b>preenchem</b>. Toque um dia de cima e depois o dia de baixo que o preenche.');setRolo('','')},
+
+selo(){setTask('<b>1B · O selo</b> (Carimbar)<br>Selecione a carta <b>Selo</b> e carimbe só os dias em que o texto diz “viu Deus que... era bom”. Toque um pedestal sem seleção para ler.');
+ addCard({id:'selo',type:'Ferramenta',name:'Selo',back:'“E viu Deus que era bom.”',cls:'tool'})},
+
+fundir(){setTask('<b>1C · Tudo</b> (Fundir)<br>Agora Deus olha para tudo de uma vez.<br><button class="btn" id="bF">Fundir as seis obras</button>');
+ $('bF').onclick=()=>{for(let i=1;i<=6;i++){tween(days[i],new THREE.Vector3(0,0,0),900)}
+  setTimeout(()=>{for(let i=1;i<=6;i++)days[i].visible=false;pairLines.forEach(l=>l.visible=false);tudo.visible=true;
+   setRolo('Gn 1:31','“Viu Deus tudo quanto fizera, e eis que era muito bom. Houve tarde e manhã, o sexto dia.”');
+   setTask('<b>1C · Tudo</b><br>Carimbe o <b>Selo</b> em “Tudo quanto fizera”.')},950)}},
+
+setimo(){setTask('<b>1D · O sétimo dia</b><br>Um sétimo pedestal chegou. Tente carimbar o Selo nele.');day7.visible=true;tween(tudo,new THREE.Vector3(-2,0,0),600);tween(day7,new THREE.Vector3(4.5,0,0),600);setRolo('Gn 2:2-3','“E, havendo Deus terminado no dia sétimo a sua obra, que fizera, descansou nesse dia de toda a sua obra que tinha feito. E abençoou Deus o dia sétimo e o santificou...”')},
+
+jardim(){setEtapa('E0 · Etapa 2 · O jardim e o mandamento');gWeek.visible=false;gGarden.visible=true;setPieces([]);
+ say([['E','Agora Moisés chega mais perto. Não o céu inteiro: um jardim.'],['T','“Então, formou o SENHOR Deus ao homem do pó da terra e lhe soprou nas narinas o fôlego de vida...” (2:7)'],['T','“E plantou o SENHOR Deus um jardim no Éden, na direção do Oriente, e pôs nele o homem que havia formado.” (2:8)'],['E','Olhe ao redor antes de seguir.']],()=>{
+  setTask('<b>2A · O jardim</b> (Arqueólogo · Abrir)<br>Examine: o <b>pomar</b>, as <b>árvores do meio</b> e o <b>homem</b>.')})},
+
+ordem(){say([['E','Agora Deus fala com o homem. Ouça com cuidado.'],['T','“E o SENHOR Deus lhe deu esta ordem: De toda árvore do jardim comerás livremente, mas da árvore do conhecimento do bem e do mal não comerás; porque, no dia em que dela comeres, certamente morrerás.” (2:16-17)'],['E','Coloque cada parte do que Ele disse no lugar do jardim a que ela se refere.']],()=>{
+ setRolo('Gn 2:16-17',EVID_HTML);
+ setTask('<b>2B · A ordem no cenário</b> (Encaixar)<br>Selecione um fragmento e toque o lugar do jardim: o pomar, uma árvore ou o homem.');
+ setPieces([{id:'f1',type:'Peça · fragmento',name:'“De toda árvore do jardim comerás livremente”',target:'pomar',cat:'Permitido'},
+  {id:'f2',type:'Peça · fragmento',name:'“da árvore do conhecimento do bem e do mal não comerás”',target:'arvConh',cat:'Proibido'},
+  {id:'f3',type:'Peça · fragmento',name:'“no dia em que dela comeres, certamente morrerás”',target:'homem',cat:'Consequência'}])})},
+
+quem(){setTask('<b>2C · Quem fala, a quem</b> (Detetive)<br>Selecione cada pessoa e toque o lugar certo. Prove pelo texto: “lhe” aponta para quem?');
+ setPieces([{id:'pD',type:'Peça · pessoa',name:'o SENHOR Deus'},{id:'pH',type:'Peça · pessoa',name:'o homem'}]);renderSeats()},
+
+cleopas(){setPieces([]);hideSlots();S.stmt=0;
+ say([['C','“Deixa eu ver se entendi...”']],()=>showStmt())},
+
+proibido(){setTask('<b>2E · Palavra exata</b><br>O que, exatamente, foi proibido?');
+ showSlots(['Olhar a árvore','Tocar a árvore','Comer da árvore','Chegar perto da árvore'].map((t,i)=>({id:i,content:t})),(id)=>{
+  if(id===2){good();hideSlots();say([['E','Comer. Só isso. Lembre exatamente do que foi dito.']],()=>go('naoebom'))}
+  else if(id===1){bad('Procure “tocar” no que Deus disse. Não está no texto.');if(!S.equivGiven){S.equivGiven=true;addCard({id:'eq',type:'Equívoco',name:'Deus proibiu tocar',back:'Vira no E1.',cls:'equiv'});toast('Procure “tocar” no texto... não está.<br><b>Equívoco</b> “Deus proibiu tocar” foi para a mesa. Ele vira no E1.','bad')}}
+  else bad('Procure essa palavra no que Deus disse. Não está lá.')})},
+
+naoebom(){setEtapa('E0 · Etapa 3 · Não é bom');
+ setRolo('Gn 2:18','“Disse mais o SENHOR Deus: <span class="w" data-w="naoebom">Não é bom</span> que o homem esteja só; far-lhe-ei uma auxiliadora que lhe seja idônea.”');
+ setTask('<b>3A · O selo racha</b> (Carimbar)<br>Selecione o <b>Selo</b> e carimbe onde Deus avalia algo em 2:18.')},
+
+desfile(){setTask('<b>3B · O desfile</b> (Encaixar, sem solução)<br>Os animais passam diante do homem. Tente encontrar, entre eles, uma “auxiliadora que lhe seja idônea”.');
+ setRolo('Gn 2:19','“...trouxe-os ao homem, para ver como este lhes chamaria; e o nome que o homem desse a todos os seres viventes, esse seria o nome deles.”');
+ setPieces([{id:'a1',type:'Peça · animal',name:'Animal doméstico'},{id:'a2',type:'Peça · animal',name:'Ave dos céus'},{id:'a3',type:'Peça · animal',name:'Animal selvático'}]);
+ S.desfile=0;showSlots([{id:'aux',label:'encaixe',content:'auxiliadora que lhe seja idônea'}],()=>{
+  if(!S.sel||S.sel.kind!=='piece'){toast('Selecione um animal primeiro.');return}
+  removePiece(S.sel.id);S.desfile++;toast('Não encaixa.');
+  if(S.desfile>=3){hideSlots();say([['T','“...para o homem, todavia, não se achava uma auxiliadora que lhe fosse idônea.” (2:20)'],['T','“Então, o SENHOR Deus fez cair pesado sono sobre o homem... tomou uma das suas costelas...” (2:21)'],['T','“E a costela que o SENHOR Deus tomara ao homem, transformou-a numa mulher e lha trouxe.” (2:22)'],['E','E então, pela primeira vez, o homem fala.'],['T','“Esta, afinal, é osso dos meus ossos e carne da minha carne; chamar-se-á varoa, porquanto do varão foi tomada.” (2:23)']],()=>{mulher.visible=true;go('quando')})}})},
+
+quando(){setTask('<b>3D · Quando?</b> (Encaixar na mesa)<br>Quando Deus deu a ordem, a mulher já existia? Ponha as duas peças em ordem.');setRolo('','');
+ setPieces([{id:'tM',type:'Peça · tempo',name:'A mulher formada (2:22)',ord:2},{id:'tO',type:'Peça · tempo',name:'A ordem (2:16-17)',ord:1}]);S.timeline=[];renderTimeline()},
+
+nus(){setEtapa('E0 · Etapa 4 · Nus');setTask('<b>4 · A palavra que se dobra</b><br>Toque a palavra que o Estranho pediu para lembrar.');
+ say([['T','“Por isso, deixa o homem pai e mãe e se une à sua mulher, tornando-se os dois uma só carne.” (2:24)'],['E','Lembre-se da palavra “nus”. Em hebraico ela soa como outra que você vai ouvir logo.']],()=>{
+ setRolo('Gn 2:25','“Ora, um e outro, o homem e sua mulher, estavam <span class="w" data-w="nus">nus</span> e não se envergonhavam.”')})},
+
+sintese(){setEtapa('E0 · Síntese');setRolo('','');setPieces([]);
+ setTask('<b>Síntese</b> (Encaixar)<br>Selecione uma carta e toque o espaço da moldura a que ela pertence.');
+ S.sint={};renderSint()},
+
+transicao(){hideSlots();setTask('');
+ const fin=level()==='alta'?'Descoberta':level()==='média'?'Caminhada junto':'Conduzida';
+ addCard({id:'sint',type:'Síntese · '+fin,name:'A ordem original',back:'Deus fala; vê o bom; dá tudo com um limite; resolve o “não é bom”; ainda sem vergonha.',cls:'gold'});
+ say([['C','“Era tudo bom. Então o que deu errado?”'],['E','Ninguém mudou a árvore. Nem o jardim.'],['E','O que mudou foi a palavra que eles ouviram sobre ela.'],['E','Você guardou exatamente o que Deus disse. Vai precisar disso agora.'],['N','[Algo se move entre os galhos do meio do jardim.]'],['T','“Mas a serpente, mais sagaz que todos os animais selváticos que o SENHOR Deus tinha feito,...” (3:1)'],['E','Agora escute com atenção. Quem fala, e o que diz.']],()=>{
+  setEtapa('Fim do E0');setTask('<b>Fim do E0.</b><br>O E1 começaria aqui, com a carta <b>O que Deus disse</b>'+(S.equivGiven?' e o Equívoco <b>“Deus proibiu tocar”</b>':'')+'.<br><button class="btn" onclick="location.reload()">Jogar de novo</button>');
+  arvConh.userData.crown.material.emissive=new THREE.Color(0x330000);arvConh.userData.crown.material.emissiveIntensity=.6})}
+};
+
+// ---------------- handlers ----------------
+function showDay(d){const t=DAYTXT[d];setRolo(t[0],t[1])}
+function onPick(kind,data){const st=S.step;
+ if(kind==='day'){const d=data.day;
+  if(st==='obras'){if(!S.sel||S.sel.kind!=='piece'){showDay(d);return}
+   const p=S.pieces.find(x=>x.id===S.sel.id);if(S.placed[d]){toast('Esse dia já tem sua obra.');return}
+   if(p.day===d){good();S.placed[d]=p.id;const m=obraMesh(OBRAS.find(o=>o.id===p.id));days[d].add(m);removePiece(p.id);showDay(d);
+    if(Object.keys(S.placed).length===6){toast('Seis obras no lugar.','ok');setTimeout(()=>go('pares'),900)}}
+   else bad('Essa obra não aparece no texto do dia '+d+'.');return}
+  if(st==='pares'){if(d<=3){S.pairA=d;toast('Dia '+d+' escolhido. Agora o dia que o preenche.');return}
+   if(!S.pairA){toast('Comece por um dia de cima (1 a 3).');return}
+   if(d===S.pairA+3){good();drawPair(S.pairA,d);S.pairs.push(S.pairA);S.pairA=null;if(S.pairs.length===3){toast('Formar e preencher: 1↔4, 2↔5, 3↔6.','ok');setTimeout(()=>go('selo'),1100)}}
+   else{bad('O dia '+d+' não preenche o que o dia '+S.pairA+' formou.');S.pairA=null}return}
+  if(st==='selo'){showDay(d);if(!S.sel||S.sel.id!=='selo')return;
+   if(S.stamped.has(d)){toast('Já carimbado.');return}
+   if([1,3,4,5,6].includes(d)){good();S.stamped.add(d);days[d].add(stampMesh(false));
+    if(S.stamped.size===5){S.sel=null;renderTray();say([['E','Cinco dias com selo. E o dia 2?'],['E','O texto não explica por quê. Guarde a pergunta. Saber o que o texto não diz também é ler bem.']],()=>{addDiario('Por que o dia 2 não tem “era bom”?');go('fundir')})}}
+   else bad('Leia o dia '+d+' de novo: a frase “viu Deus que... era bom” está aí?');return}
+  showDay(d);return}
+ if(kind==='tudo'&&st==='fundir'){if(!S.sel||S.sel.id!=='selo'){toast('Selecione o Selo.');return}
+  if(S.done1C)return;S.done1C=true;good();tudo.add(stampMesh(true));tudo.userData.box.material.color.set(0xb8953e);
+  addCard({id:'bom',type:'Palavra',name:'Bom',back:'Quem avalia é Deus. O último selo, sobre tudo: “muito bom” (1:31).'});
+  getCard('selo').back='“E viu Deus que era bom.” Usado em tudo: ficou dourado.';renderTray();
+  setTimeout(()=>go('setimo'),800);return}
+ if(kind==='day7'&&st==='setimo'){if(!S.sel||S.sel.id!=='selo'){toast('Selecione o Selo e tente.');return}
+  S.sel=null;renderTray();say([['N','O selo não pega.'],['E','No sétimo dia não há “era bom”, nem “tarde e manhã”. Deus não fez mais nada.'],['T','“E abençoou Deus o dia sétimo e o santificou; porque nele descansou de toda a obra que, como Criador, fizera.” (2:3)']],()=>go('jardim'));return}
+ if(st==='jardim'){
+  if(kind==='pomar'){S.visited.add('pomar');setRolo('Gn 2:9','“Do solo fez o SENHOR Deus brotar toda sorte de árvores <b>agradáveis à vista</b> e <b>boas para alimento</b>...”')}
+  if(kind==='arvVida'||kind==='arvConh'){S.visited.add('meio');setRolo('Gn 2:9','“...e também a <b>árvore da vida</b> no meio do jardim e a <b>árvore do conhecimento do bem e do mal</b>.”');
+   if(!getCard('arvs'))addCard({id:'arvs',type:'Símbolo',name:'As duas árvores do meio',back:'A árvore da vida e a do conhecimento do bem e do mal, ambas “no meio” (2:9).'})}
+  if(kind==='homem'){S.visited.add('homem');setRolo('Gn 2:15','“Tomou, pois, o SENHOR Deus ao homem e o colocou no jardim do Éden para o <b>cultivar</b> e o <b>guardar</b>.”')}
+  if(S.visited.size===3&&!S.gardenDone){S.gardenDone=true;good();setTimeout(()=>go('ordem'),1200)}
+  else setTask('<b>2A · O jardim</b><br>Visitados: '+[...S.visited].join(', ')+' ('+S.visited.size+'/3)');return}
+ if(st==='ordem'){if(!S.sel||S.sel.kind!=='piece'){toast('Selecione um fragmento primeiro.');return}
+  const p=S.pieces.find(x=>x.id===S.sel.id);const k=kind==='arvVida'?'arvVida':kind;
+  if(p.target===k){good();removePiece(p.id);S.frag[p.cat]=p.name;
+   if(k==='pomar')pomar.children.forEach(t=>{t.userData.crown.material.emissive=new THREE.Color(0x3a6b1a);t.userData.crown.material.emissiveIntensity=.6});
+   if(k==='arvConh'){arvConh.userData.crown.material.color.set(0x4a1e1e)}
+   if(k==='homem')aura.visible=true;
+   toast(p.cat+': encaixado.','ok');
+   if(Object.keys(S.frag).length===3){addCard({id:'evid',type:'Evidência',name:'O que Deus disse (2:16-17)',back:'Permitido: toda árvore, livremente. Proibido: comer da árvore do conhecimento. Consequência: morrerás. Quando? —',cls:'gold'});setTimeout(()=>go('quem'),900)}}
+  else{const why={f1:'Esse fragmento fala de <b>toda</b> árvore.',f2:'Esse fragmento fala de <b>uma</b> árvore só. Qual?',f3:'Esse fragmento fala de quem <b>comer</b>.'}[p.id];bad(why)}
+  return}
+}
+function renderSeats(){showSlots([{id:'fala',label:'FALA',content:S.seats.fala||'—',filled:!!S.seats.fala},{id:'ouve',label:'OUVE (“lhe”)',content:S.seats.ouve||'—',filled:!!S.seats.ouve}],(id)=>{
+ if(!S.sel||S.sel.kind!=='piece'){toast('Selecione uma pessoa.');return}
+ const ok=(id==='fala'&&S.sel.id==='pD')||(id==='ouve'&&S.sel.id==='pH');
+ if(ok){good();const p=S.pieces.find(x=>x.id===S.sel.id);S.seats[id]=p.name;removePiece(p.id);renderSeats();
+  if(S.seats.fala&&S.seats.ouve){hideSlots();const e=getCard('evid');e.back+=' Dito por: o SENHOR Deus. A: o homem.';renderTray();say([['E','Uma ordem, dita por Deus, ao homem.']],()=>go('cleopas'))}}
+ else bad(id==='fala'?'Esse é quem ouve.':'Esse é quem fala.')})}
+const STMTS=[
+ {t:'“Então Ele deu <i>algumas</i> árvores para comer.”',w:'toda',fb:'De <b>toda</b> árvore. Todas, menos uma.'},
+ {t:'“E não podia nem <i>chegar perto</i> daquela árvore.”',w:'comeras',fb:'O limite é: não <b>comerás</b>. Nada sobre chegar perto.'},
+ {t:'“Isso foi dito <i>aos dois</i>, ao homem e à mulher.”',w:'lhe',fb:'“<b>Lhe</b>”: ao homem (2:15).'}];
+function showStmt(){const s=STMTS[S.stmt];setEtapa('E0 · Etapa 2 · Cleopas se confunde');setRolo('Gn 2:16-17',EVID_HTML);
+ setTask(`<b>2D · Apresentar</b> (${S.stmt+1}/3)<br>🎭 Cleopas: ${s.t}<br><br>Selecione a carta <b>O que Deus disse</b> e toque, no rolo, a palavra que o corrige.`)}
+function onWord(w,el){const st=S.step;
+ if(st==='cleopas'){if(!S.sel||S.sel.id!=='evid'){toast('Primeiro selecione (apresente) a carta “O que Deus disse”.');return}
+  const s=STMTS[S.stmt];if(w===s.w){good();el.classList.add('hit');toast('🎭 Cleopas: “Ah, é verdade.”<br>'+s.fb,'ok');S.stmt++;
+   if(S.stmt>=3){S.sel=null;renderTray();setTimeout(()=>go('proibido'),1400)}else setTimeout(showStmt,1400)}
+  else bad('Essa palavra não corrige o que Cleopas disse.');return}
+ if(st==='naoebom'){if(w!=='naoebom')return;if(!S.sel||S.sel.id!=='selo'){toast('Selecione o Selo.');return}
+  good();removeCard('selo');addCard({id:'nb',type:'Descoberta',name:'Não é bom',back:'O único “não é bom” antes da queda. Quem diz é o mesmo que dizia “bom”. Quem resolve é Ele.'});
+  say([['N','O selo racha na sua mão.'],['E','Sete vezes Deus disse “bom”. Agora Ele mesmo diz “não é bom”. E é Ele quem vai resolver.']],()=>go('desfile'));return}
+ if(st==='nus'&&w==='nus'){good();addCard({id:'arum',type:'Palavra (velada)',name:'nu · astuto · maldito',back:'Vira no E3.',cls:'veiled'});setTimeout(()=>go('sintese'),700)}}
+function renderTimeline(){showSlots([{id:0,label:'PRIMEIRO',content:S.timeline[0]?.name||'—',filled:!!S.timeline[0]},{id:1,label:'DEPOIS',content:S.timeline[1]?.name||'—',filled:!!S.timeline[1]}],(id)=>{
+ if(!S.sel||S.sel.kind!=='piece'){toast('Selecione uma peça.');return}
+ const p=S.pieces.find(x=>x.id===S.sel.id);if(p.ord===id+1){good();S.timeline[id]=p;removePiece(p.id);renderTimeline();
+  if(S.timeline[0]&&S.timeline[1]){hideSlots();const e=getCard('evid');e.back=e.back.replace('Quando? —','Quando? Antes da mulher ser formada (2:22).');renderTray();
+   say([['E','Então como ela saberia o que Deus disse? Guarde isso também.']],()=>{addDiario('Como a mulher conheceu a ordem?');go('nus')})}}
+ else bad()})}
+const SINT=[{id:'bom',label:'o bom',want:'bom'},{id:'lim',label:'o limite',want:'evid'},{id:'meio',label:'o meio do jardim',want:'arvs'},{id:'nb',label:'o “não é bom”',want:'nb'},{id:'ainda',label:'o “ainda não”',want:'arum'}];
+function renderSint(){showSlots(SINT.map(s=>({id:s.id,label:s.label,content:S.sint[s.id]||'—',filled:!!S.sint[s.id]})),(id)=>{
+ if(!S.sel||S.sel.kind!=='card'){toast('Selecione uma carta da mesa.');return}
+ const s=SINT.find(x=>x.id===id);if(S.sint[id])return;
+ if(S.sel.id===s.want){good();S.sint[id]=getCard(s.want).name;S.sel=null;renderTray();renderSint();if(Object.keys(S.sint).length===5)setTimeout(()=>go('transicao'),700)}
+ else bad('Essa carta não fala de “'+s.label+'”.')})}
+
+renderChama();renderTray();go('intro');
+</script>
+</body>
+</html>
